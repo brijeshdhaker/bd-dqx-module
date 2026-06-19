@@ -22,7 +22,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "basedpyright>=1.31",
-    "ruff>=0.14.7",
+    "ruff>=0.5.3",
 ]
 test = [
     "pytest~=8.3",

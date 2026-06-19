@@ -815,7 +815,7 @@ dev = [
     { name = "pytest-rerunfailures", specifier = "~=14.0" },
     { name = "pytest-timeout", specifier = "~=2.3.1" },
     { name = "pytest-xdist", specifier = "~=3.5.0" },
-    { name = "ruff", specifier = "~=0.3.4" },
+    { name = "ruff", specifier = ">=0.5.3" },
     { name = "types-pyyaml", specifier = "~=6.0.3" },
     { name = "types-requests", specifier = "~=2.31.0" },
 ]
@@ -827,7 +827,7 @@ lint = [
     { name = "pylint", specifier = "~=3.3.1" },
     { name = "pylint-per-file-ignores", specifier = "~=1.3" },
     { name = "pylint-pytest", specifier = "==2.0.0a1" },
-    { name = "ruff", specifier = "~=0.3.4" },
+    { name = "ruff", specifier = ">=0.5.3" },
     { name = "types-pyyaml", specifier = "~=6.0.3" },
     { name = "types-requests", specifier = "~=2.31.0" },
 ]
@@ -895,7 +895,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "basedpyright", specifier = ">=1.31" },
-    { name = "ruff", specifier = ">=0.14.7" },
+    { name = "ruff", specifier = ">=0.5.3" },
 ]
 test = [
     { name = "httpx", specifier = "~=0.28" },

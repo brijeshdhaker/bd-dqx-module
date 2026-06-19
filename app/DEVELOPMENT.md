@@ -35,7 +35,7 @@ project-specific CLI required. **Prefer `make` from the project root.**
 
 **Option A — Databricks CLI (recommended):**
 ```bash
-databricks auth login --host https://your-workspace.cloud.databricks.com
+databricks auth login --host https://dbc-ad78fc43-bcc0.cloud.databricks.com --profile databricks-cli
 ```
 
 **Option B — `.env` file (useful when working with multiple profiles):**
@@ -80,7 +80,7 @@ cd app && uv sync  # Python dependencies
 
 Or from the `app/` directory:
 ```bash
-uv sync
+uv sync --active
 yarn install --frozen-lockfile
 ```
 

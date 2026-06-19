@@ -34,7 +34,7 @@ clean: docs-clean ## Remove .venv, caches, coverage data, and docs build artifac
 ##@ Setup
 
 dev: ## Install Python deps via uv sync (creates .venv with all extras)
-	uv sync --all-extras
+	uv sync --all-extras --active
 
 ##@ Format & lint
 

@@ -1,6 +1,7 @@
 bundle:
   name: "dqx-studio"
-
+  # Catalogs require the direct deployment engine
+  # engine: direct
 
 variables:
   catalog_name:
@@ -20,7 +21,7 @@ variables:
     default: "dqx-studio"
   sql_warehouse_name:
     description: "Name of the deployed SQL warehouse for DQX Studio queries (must be unique per workspace)"
-    default: "dqx-studio-sql-warehouse"
+    default: "Serverless Starter Warehouse"
   sql_warehouse_id:
     description: >
       ID of the SQL warehouse the app queries. Every target MUST set
@@ -43,13 +44,13 @@ variables:
       Default is intentionally empty so a target that forgets to set it
       fails fast at deploy time rather than silently picking the wrong
       warehouse.
-    default: ""
+    default: "4501ae4095de396a"
   wheels_volume_name:
     description: "Name of the UC volume for storing DQX wheel files"
     default: "wheels"
   dqx_service_principal_application_id:
     description: "Application ID of the service principal for DQX tasks"
-    default: "00000000-0000-0000-0000-000000000000"
+    default: "211d31e8-a436-415a-b99c-541379021a3e"
   # ------------------------------------------------------------------
   # Lakebase backend
   # ------------------------------------------------------------------
@@ -126,7 +127,7 @@ variables:
         # app creates its ``dqx_studio`` Postgres schema inside it on
         # first connection.
         - name: "DQX_LAKEBASE_INSTANCE_NAME"
-          value: "${var.lakebase_instance_name}"
+          value: ""
         - name: "DQX_LAKEBASE_DATABASE_NAME"
           value: "${var.lakebase_database_name}"
 
@@ -209,12 +210,13 @@ resources:
         # ``CAN_CONNECT_AND_CREATE`` automatically — that lets the app
         # SP create its ``dqx_studio`` schema inside the bound DB on
         # first connection.
-        - name: "dqx-lakebase"
-          description: "Lakebase Postgres backend for app OLTP state"
-          database:
-            database_name: ${var.lakebase_database_name}
-            instance_name: ${resources.database_instances.lakebase.name}
-            permission: "CAN_CONNECT_AND_CREATE"
+        #
+        # - name: "dqx-lakebase"
+        #   description: "Lakebase Postgres backend for app OLTP state"
+        #   database:
+        #     database_name: ${var.lakebase_database_name}
+        #     instance_name: ${resources.database_instances.lakebase.name}
+        #     permission: "CAN_CONNECT_AND_CREATE"
 
       permissions:
         - group_name: "account users"
@@ -242,6 +244,22 @@ resources:
   # binding is required before the first deploy — see ``make app-bind``
   # and DEPLOYMENT.md → "Migrating an existing workspace".
   # ------------------------------------------------------------------
+  
+  #  # 1. Define the Catalog Resource
+  # catalogs:
+  #   dqx_catalog:
+  #     name: ${var.catalog_name}
+  #     comment: 'dqx studio main catalog'
+  #     properties:
+  #       purpose: 'DQX Data Warehouse'
+  #     lifecycle:
+  #       prevent_destroy: true
+  #     # grants:
+  #     #   - principal: brijeshdhaker@yourcompany.com
+  #     #     privileges:
+  #     #       - USE_CATALOG
+  #     #       - CREATE_SCHEMA
+
   schemas:
     main_schema:
       catalog_name: ${var.catalog_name}
@@ -267,12 +285,12 @@ resources:
       lifecycle:
         prevent_destroy: true
 
-  database_instances:
-    lakebase:
-      name: ${var.lakebase_instance_name}
-      capacity: ${var.lakebase_capacity}
-      lifecycle:
-        prevent_destroy: true
+  # database_instances:
+  #   lakebase:
+  #     name: ${var.lakebase_instance_name}
+  #     capacity: ${var.lakebase_capacity}
+  #     lifecycle:
+  #       prevent_destroy: true
 
   jobs:
     dqx_task_runner:
@@ -306,7 +324,7 @@ resources:
       environments:
         - environment_key: "default"
           spec:
-            client: "5"
+            environment_version: "4"
             dependencies:
               - ./.build/tasks/databricks_labs_dqx_task_runner-*.whl
               - ./.build/databricks_labs_dqx-*.whl
@@ -336,17 +354,17 @@ targets:
   # Everything else has a sensible default in the ``variables:`` block
   # at the top of this file and can be overridden per target below.
   #
-  # example-target-mode-a:
+  # dev:
   #   workspace:
-  #     profile: <your-profile>
+  #     profile: databricks-cli
   #   variables:
-  #     catalog_name: <your-catalog>
-  #     dqx_service_principal_application_id: <your-sp-application-id>
-  #     sql_warehouse_id: ${resources.sql_warehouses.dqx_sql_warehouse.id}
+  #     catalog_name: "${var.catalog_name}"
+  #     dqx_service_principal_application_id: "${var.dqx_service_principal_application_id}"
+  #     sql_warehouse_id: "${resources.sql_warehouses.dqx_sql_warehouse.id}"
   #     # Optional overrides:
   #     # admin_group: <your-admin-group>
   #     # app_name: <your-app-name>
-  #     # sql_warehouse_name: <your-sql-warehouse-name>   # Mode A only
+  #     # sql_warehouse_name: "${var.sql_warehouse_name}"   # Mode A only
   #     # schema_name: <your-schema-name>
   #     # tmp_schema_name: <your-tmp-schema-name>
   #     # wheels_volume_name: <your-volume-name>
@@ -366,15 +384,15 @@ targets:
   #           - group_name: "users"
   #             level: "CAN_USE"
   #
-  # example-target-mode-b:
-  #   workspace:
-  #     profile: <your-profile>
-  #   variables:
-  #     catalog_name: <your-catalog>
-  #     dqx_service_principal_application_id: <your-sp-application-id>
-  #     sql_warehouse_id: "<existing-warehouse-id>"   # just the ID
-  #   # No resources.sql_warehouses block. post_deploy_grants.sh grants
-  #   # CAN_USE to app SP / job SP / users via the warehouses API.
+  dev:
+    workspace:
+      profile: databricks-cli
+    variables:
+      catalog_name: "dqx"
+      dqx_service_principal_application_id: "211d31e8-a436-415a-b99c-541379021a3e"
+      sql_warehouse_id: "4501ae4095de396a"   # just the ID
+    # No resources.sql_warehouses block. post_deploy_grants.sh grants
+    # CAN_USE to app SP / job SP / users via the warehouses API.
 
   # Mode B: reuses the pre-existing ``dqx-studio-sql-warehouse``
   # (X-Small serverless) and the pre-existing
