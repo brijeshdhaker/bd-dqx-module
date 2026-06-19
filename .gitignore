@@ -166,7 +166,7 @@ cython_debug/
 dev/cleanup.py
 
 .databricks
-.vscode
+#.vscode
 
 .databricks-login.json
 .local-dev

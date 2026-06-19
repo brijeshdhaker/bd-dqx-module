@@ -387,6 +387,8 @@ targets:
   dev:
     workspace:
       profile: databricks-cli
+      host: https://dbc-ad78fc43-bcc0.cloud.databricks.com
+      # root_path: /Workspace/Users/${workspace.current_user.userName}/apps/bd_python_module
     variables:
       catalog_name: "dqx"
       dqx_service_principal_application_id: "211d31e8-a436-415a-b99c-541379021a3e"
