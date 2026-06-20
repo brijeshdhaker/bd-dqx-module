@@ -31,9 +31,11 @@ databricks fs ls
 
 databricks auth login --profile databricks-cli
 
-databricks auth login --host https://dbc-ad78fc43-bcc0.cloud.databricks.com --profile databricks-cli
+databricks auth login --host ${DATABRICKS_HOST} --profile databricks-cli
 
-databricks auth login --configure-serverless --host https://dbc-ad78fc43-bcc0.cloud.databricks.com --profile databricks-cli
+databricks auth login --host ${DATABRICKS_HOST} --account-id eee8ca65-56a2-4cd5-aae4-8edc4a19e595 --profile databricks-cli
+
+databricks auth login --configure-serverless --host ${DATABRICKS_HOST} --profile databricks-cli
 
 databricks auth describe --profile databricks-cli
 

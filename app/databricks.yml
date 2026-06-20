@@ -87,7 +87,7 @@ artifacts:
     # prepends the parent DQX library wheel filename so Databricks
     # Apps' pip install picks up both, in dependency order.
     build: >
-      uv run python scripts/build_app.py &&
+      uv run --active python scripts/build_app.py &&
       uv build ../ --wheel --out-dir .build/ &&
       uv build tasks/ --wheel --out-dir .build/tasks/ &&
       dqx_whl=$(ls -1 .build/databricks_labs_dqx-*.whl | head -1 | xargs basename) &&
@@ -184,44 +184,44 @@ resources:
   # ------------------------------------------------------------------
   
   # 1. Define the Catalog Resource
-  catalogs:
-    dqx_catalog:
-      name: ${var.catalog_name}
-      comment: 'dqx studio main catalog'
-      properties:
-        purpose: 'DQX Data Warehouse'
-      lifecycle:
-        prevent_destroy: true
-      # grants:
-      #   - principal: brijeshdhaker@gmail.com
-      #     privileges:
-      #       - USE_CATALOG
-      #       - CREATE_SCHEMA
+  # catalogs:
+  #   dqx_catalog:
+  #     name: ${var.catalog_name}
+  #     comment: 'dqx studio main catalog'
+  #     properties:
+  #       purpose: 'DQX Data Warehouse'
+  #     lifecycle:
+  #       prevent_destroy: true
+  #     # grants:
+  #     #   - principal: brijeshdhaker@gmail.com
+  #     #     privileges:
+  #     #       - USE_CATALOG
+  #     #       - CREATE_SCHEMA
 
-  schemas:
-    main_schema:
-      catalog_name: ${var.catalog_name}
-      name: ${var.schema_name}
-      comment: "DQX Studio main schema (rules, run history, profiling, metrics, quarantine, OLTP fallback)"
-      lifecycle:
-        prevent_destroy: true
+  # schemas:
+  #   main_schema:
+  #     catalog_name: ${var.catalog_name}
+  #     name: ${var.schema_name}
+  #     comment: "DQX Studio main schema (rules, run history, profiling, metrics, quarantine, OLTP fallback)"
+  #     lifecycle:
+  #       prevent_destroy: true
 
-    tmp_schema:
-      catalog_name: ${var.catalog_name}
-      name: ${var.tmp_schema_name}
-      comment: "DQX Studio temp schema for per-user dry-run views"
-      lifecycle:
-        prevent_destroy: true
+  #   tmp_schema:
+  #     catalog_name: ${var.catalog_name}
+  #     name: ${var.tmp_schema_name}
+  #     comment: "DQX Studio temp schema for per-user dry-run views"
+  #     lifecycle:
+  #       prevent_destroy: true
 
-  volumes:
-    wheels:
-      catalog_name: ${var.catalog_name}
-      schema_name: ${resources.schemas.main_schema.name}
-      name: ${var.wheels_volume_name}
-      volume_type: MANAGED
-      comment: "DQX Studio wheel storage for the task runner"
-      lifecycle:
-        prevent_destroy: true
+  # volumes:
+  #   wheels:
+  #     catalog_name: ${var.catalog_name}
+  #     schema_name: ${resources.schemas.main_schema.name}
+  #     name: ${var.wheels_volume_name}
+  #     volume_type: MANAGED
+  #     comment: "DQX Studio wheel storage for the task runner"
+  #     lifecycle:
+  #       prevent_destroy: true
 
   # database_instances:
   #   lakebase:
