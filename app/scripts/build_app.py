@@ -130,7 +130,7 @@ def _dump_openapi() -> None:
         "from databricks_labs_dqx_app.backend.app import app;"
         f"open({str(target)!r}, 'w').write(json.dumps(app.openapi(), indent=2))"
     )
-    _run(["uv", "run", "--exact", "--all-extras", "python", "-c", code])
+    _run(["uv", "run", "--active", "--exact", "--all-extras", "python", "-c", code])
 
 
 def _run_orval() -> None:

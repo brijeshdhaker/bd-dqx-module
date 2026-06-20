@@ -60,6 +60,16 @@
       "justMyCode": false
     },
     {
+      "name": "Python Debugger: dqx-studio",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/app/scripts/dev.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/app",
+      "envFile": "${workspaceFolder}/app/.env",
+      "justMyCode": false
+    },
+    {
       "name": "Python Debugger: Current File with Arguments",
       "type": "debugpy",
       "request": "launch",

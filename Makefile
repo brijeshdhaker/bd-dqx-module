@@ -10,7 +10,7 @@ export UV_FROZEN := 1
 # Ensure that hatchling is pinned when builds are needed.
 export UV_BUILD_CONSTRAINT := .build-constraints.txt
 
-UV_RUN := uv run --exact --all-extras
+UV_RUN := uv run --active --exact --all-extras
 UV_TEST := $(UV_RUN) pytest -n 10 --timeout 60 --durations 20
 
 # ``make help`` parses ``##`` annotations next to each target and ``##@``

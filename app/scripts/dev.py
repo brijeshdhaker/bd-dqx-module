@@ -136,6 +136,7 @@ def _start_uvicorn() -> subprocess.Popen[bytes]:
         [
             "uv",
             "run",
+            "--active",
             "--exact",
             "--all-extras",
             "uvicorn",

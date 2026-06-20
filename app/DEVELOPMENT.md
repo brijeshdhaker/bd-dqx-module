@@ -95,7 +95,7 @@ make app-build
 
 Or directly from the `app/` directory:
 ```bash
-uv run python scripts/build_app.py
+uv run --active python scripts/build_app.py
 ```
 
 This generates the OpenAPI schema, compiles the React/TypeScript UI into `__dist__/`, and packages everything into a wheel. The wheel filename and METADATA both carry a build-tag local-version segment (e.g. `.b20260530t012345`) so successive deploys at the same git commit force a fresh pip install in Databricks Apps' persistent venv.
@@ -109,7 +109,7 @@ make app-start-dev   # builds first, then starts uvicorn + vite in the foregroun
 
 Or directly from the `app/` directory:
 ```bash
-uv run python scripts/dev.py
+uv run --active python scripts/dev.py
 ```
 
 This spawns:
@@ -202,7 +202,7 @@ make app-build
 
 **uv hangs:**
 ```bash
-uv sync -v         # verbose output to diagnose
+uv sync --active -v         # verbose output to diagnose
 rm -rf .venv/.lock # remove stale lock if needed
 ```
 
