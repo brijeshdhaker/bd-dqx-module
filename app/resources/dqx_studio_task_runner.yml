@@ -1,0 +1,54 @@
+resources:
+  jobs:
+    dqx_studio_task_runner:
+      name: dqx-studio-task-runner
+      max_concurrent_runs: 10
+      tasks:
+        - task_key: run_task
+          python_wheel_task:
+            package_name: databricks_labs_dqx_task_runner
+            entry_point: dqx-task-runner
+            parameters:
+              - --task_type
+              - "{{job.parameters.task_type}}"
+              - --view_fqn
+              - "{{job.parameters.view_fqn}}"
+              - --result_catalog
+              - "{{job.parameters.result_catalog}}"
+              - --result_schema
+              - "{{job.parameters.result_schema}}"
+              - --config_json
+              - "{{job.parameters.config_json}}"
+              - --run_id
+              - "{{job.parameters.run_id}}"
+              - --requesting_user
+              - "{{job.parameters.requesting_user}}"
+          environment_key: default
+      tags:
+        app: dqx
+      queue:
+        enabled: true
+      parameters:
+        - name: task_type
+          default: profile
+        - name: view_fqn
+          default: ""
+        - name: result_catalog
+          default: dqx
+        - name: result_schema
+          default: dqx_studio
+        - name: config_json
+          default: "{}"
+        - name: run_id
+          default: ""
+        - name: requesting_user
+          default: unknown
+      run_as:
+        service_principal_name: 211d31e8-a436-415a-b99c-541379021a3e
+      environments:
+        - environment_key: default
+          spec:
+            client: "5"
+            dependencies:
+              - /Volumes/dqx/dqx_studio/wheels/databricks_labs_dqx-0.15.0-py3-none-any.whl
+              - /Volumes/dqx/dqx_studio/wheels/databricks_labs_dqx_task_runner-0.1.0-py3-none-any.whl
