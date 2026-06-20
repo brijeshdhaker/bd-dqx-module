@@ -43,8 +43,12 @@ databricks current-user me --profile databricks-cli
 ```
 
 #
+```bash
+
 databricks functions list data_quality default --output json
+
 databricks catalogs delete --name dqx --force
+```
 #
 ### Workspace
 #
@@ -53,10 +57,10 @@ databricks catalogs delete --name dqx --force
 databricks workspace list /Workspace/Users/brijeshdhaker@gmail.com/apps --profile databricks-cli
 
 # Download the app files to your computer:
-databricks workspace export-dir /Workspace/Users/brijeshdhaker@gmail.com/apps/mcp-builder-app . --profile databricks-cli
+databricks workspace export-dir /Workspace/Users/brijeshdhaker@gmail.com/apps/bd_dqx_module . --profile databricks-cli
 
 # Sync your changes:
-databricks sync --watch . /Workspace/Users/brijeshdhaker@gmail.com/apps/mcp-builder-app --profile databricks-cli
+databricks sync --watch . /Workspace/Users/brijeshdhaker@gmail.com/apps/bd_dqx_module --profile databricks-cli
 
 ```
 
@@ -78,12 +82,11 @@ databricks bundle destroy --auto-approve --profile databricks-cli
 databricks bundle run --target dev job_pipeline_dqx_qc
 
 ```
-#
+
 ### Databricks Apps Deploymnet:
-#
 ```bash
 #
-databricks apps deploy mcp-builder-app --source-code-path /Workspace/Users/brijeshdhaker@gmail.com/apps/mcp-builder-app --profile databricks-cli
+databricks apps deploy bd_dqx_module --source-code-path /Workspace/Users/brijeshdhaker@gmail.com/apps/bd_dqx_module --profile databricks-cli
 
 # Show Details
 databricks apps list --profile databricks-cli --output json
