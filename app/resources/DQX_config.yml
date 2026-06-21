@@ -1,0 +1,119 @@
+log_level: INFO
+version: 1
+
+serverless_clusters: true           # <- whether to use serverless cluster for workflows or not (default is true)
+
+# Using serverless clusters is recommended as it allows for automated cluster management and scaling.
+# Below override clusters and spark conf is only applicable if `serverless_clusters` is set to `false`
+
+profiler_override_clusters:         # <- optional dictionary mapping job cluster names to existing cluster IDs
+  default: 0709-132523-cnhxf2p6     # <- existing cluster Id to use
+profiler_spark_conf:                # <- optional spark configuration to use for the profiler workflow
+  spark.sql.ansi.enabled: true      # <- example setting
+profiler_max_parallelism: 4         # <- max parallelism for profiling multiple tables
+
+quality_checker_override_clusters:  # <- optional dictionary mapping job cluster names to existing cluster IDs
+  default: 0709-132523-cnhxf2p6     # <- existing cluster Id to use
+quality_checker_spark_conf:         # <- optional spark configuration to use for the quality checker workflow
+  spark.sql.ansi.enabled: true      # <- example setting
+quality_checker_max_parallelism: 4  # <- max parallelism for quality checking multiple tables
+
+e2e_override_clusters:              # <- optional dictionary mapping job cluster names to existing cluster IDs
+  default: 0709-132523-cnhxf2p6     # <- existing cluster Id to use
+e2e_spark_conf:                     # <- optional spark configuration to use for the end to end workflow
+    spark.sql.ansi.enabled: true    # <- example setting
+
+anomaly_override_clusters:          # <- optional dictionary mapping job cluster names to existing cluster IDs (anomaly-trainer workflow)
+  default: 0709-132523-cnhxf2p6     # <- existing cluster Id to use
+anomaly_spark_conf:                 # <- optional spark configuration to use for the anomaly-trainer workflow
+  spark.sql.ansi.enabled: true      # <- example setting
+
+extra_params:                       # <- optional extra parameters to pass to the workflows
+    result_column_names:
+        errors: dq_errors           # <- default is "_errors"
+        warnings: dq_warnings       # <- default is "_warnings"
+    user_metadata:
+        custom_metadata: custom_value # <- optional user metadata to be added to the results
+
+llm_config:                         # <- configuration for the llm-assisted features
+  model:
+    model_name: "databricks/databricks-claude-sonnet-4-5"
+    api_key: xxx                    # <- optional API key for the model as secret in the format: secret_scope/secret_key. Not required by foundational models
+    api_base: xxx                   # <- optional API base for the model as secret in the format: secret_scope/secret_key. Not required by foundational models
+
+run_configs:                        # <- list of run configurations, each run config defines one specific input and output location
+
+- name: default                     # <- unique name of the run config (it can be any string), e.g. input table or job name (use "default" during installation)
+
+  input_config:                     # <- optional input data configuration
+    location: workspace.default.users_raw       # <- input location of the data (table or cloud path)
+    format: delta                   # <- format, required if cloud path provided
+    is_streaming: false             # <- whether the input data should be read using streaming (default is false)
+    schema: col1 int, col2 string   # <- schema of the input data (optional), applicable if reading csv and json files
+    options:                        # <- additional options for reading from the input location (optional)
+      versionAsOf: '0'
+
+  output_config:                    # <- optional output data configuration (omit when only the quarantine table is desired)
+    location: workspace.default.users_silver       # <- output location (table), used as input for the quality dashboard if quarantine location is not provided
+    format: delta                   # <- format of the output table
+    mode: append                    # <- write mode for the output table (append or overwrite)
+    options:                        # <- additional options for writing to the output table (optional)
+      mergeSchema: 'true'
+      #checkpointLocation: /Volumes/catalog1/schema1/checkpoint  # <- only applicable if input_config.is_streaming is enabled
+    trigger:                        # <- streaming trigger, only applicable if input_config.is_streaming is enabled
+      availableNow: true
+
+  quarantine_config:                     # <- optional quarantine data configuration, if specified, bad data is written to quarantine table
+    location: workspace.default.users_raw_quarantine # <- quarantine location (table), used as input for quality dashboard
+    format: delta                        # <- format of the quarantine table (default: delta)
+    mode: append                         # <- write mode for the quarantine table (append or overwrite, default: append)
+    options:                             # <- additional options for writing to the quarantine table (optional)
+      mergeSchema: 'true'
+      #checkpointLocation: /Volumes/catalog1/schema1/checkpoint  # <- only applicable if input_config.is_streaming is enabled
+    trigger:                             # <- optional streaming trigger, only applicable if input_config.is_streaming is enabled
+      availableNow: true
+
+  metrics_config:                        # <-  optional summary metrics storage
+    format: delta
+    location: workspace.default.dq_metrics
+    mode: append
+
+  checks_location: iot_checks.yml        # <- Quality rules (checks) can be stored in a table or defined in JSON or YAML files, located at absolute or relative path within the installation folder or volume file path.
+
+  anomaly_config:                          # <- optional row anomaly detection configuration (model training via workflow)
+    columns: [amount, quantity]            # <- optional, omit to use all supported columns
+    model_name: main.iot.orders_monitor    # <- required when using anomaly config, fully qualified
+    registry_table: main.iot.dqx_anomaly_models  # <- required when using anomaly config, fully qualified
+    # for the full parameter anomaly specification, see the Row Anomaly Detection documentation
+
+  # if wanting to store checks in lakebase table
+  # checks_location: dqx.config.checks                        # <- fully qualified Lakebase table for storing quality rules (checks)
+  # lakebase_instance_name: my-lakebase-instance              # <- the name of the lakebase instance to use for storing checks
+  # lakebase_client_id: 00000000-0000-0000-0000-000000000000  # <- optional service principal client ID to use to connect to Lakebase, if not provided, the caller identity, i.e., user@domain.com, is used
+  # lakebase_port: 5432                                       # <- optional port to connect to Lakebase, default is 5432
+
+  custom_check_functions:                               # <- optional mapping of custom check function name to Python file (module) containing check function definition
+    my_func: custom_checks/my_funcs.py                  # relative workspace path (installation folder prefix applied)
+    my_other: /Workspace/Shared/MyApp/my_funcs.py       # or absolute workspace path
+    email_mask: /Volumes/main/dqx_utils/custom/email.py # or UC volume path
+  reference_tables:                      # <- optional mapping of reference table names to reference table locations (e.g. required for foreign key check)
+    reference_table_1:                   # <- name of the reference table
+      input_config:                      # <- input data configuration for the reference table
+        format: delta
+        location: main.nytaxi.ref
+    reference_table_2:                   # <- another reference table
+      input_config:
+        format: delta
+        location: main.nytaxi.ref2       # <- location of the reference table, can be a table or path to files (cloud, volume or workspace path)
+  profiler_config:                            # <- profiler configuration
+    summary_stats_file: iot_summary_stats.yml # <- relative location within the installation folder of profiling summary stats
+    sample_fraction: 0.3                      # <- fraction of data to sample in the profiler (30%)
+    sample_seed: 30                           # <- optional seed for reproducible sampling
+    limit: 1000                               # <- limit the number of records to profile
+    filter: "maintenance_type = 'preventive'" # <- generate profile in a subset of your data source
+    criticality: error                        # <- default criticality for generated rules ('error' or 'warn')
+    llm_primary_key_detection: false          # <- whether to use llm-assisted pk detection to generate uniqueness check
+  checks_user_requirements: business rules description  # <- optional user input for AI-assisted rule generation; only supported if `serverless_clusters` is enabled
+  warehouse_id: your-warehouse-id             # <- warehouse id for refreshing dashboard
+
+- name: another_run_config                    # <- unique name of the run config

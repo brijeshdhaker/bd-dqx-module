@@ -1,0 +1,7 @@
+# data_quality.default.employee
+- criticality: warn
+  check:
+    function: is_not_empty
+    arguments:
+      column: emp_id
+      trim_strings: true
