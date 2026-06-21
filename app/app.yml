@@ -1,2 +1,39 @@
 command:
   ["uvicorn", "databricks_labs_dqx_app.backend.app:app", "--workers", "2"]
+
+env:
+  # =============================================================================
+  # Application Settings
+  # =============================================================================
+  - name: ENV
+    value: "development"
+  - name: PROJECTS_BASE_DIR
+    value: ".build"
+  - name: PYTHONPATH
+    value: "/app/python/source_code/packages"
+  - name: DATABRICKS_WAREHOUSE_ID
+    value: "4501ae4095de396a"
+  - name: DQX_CATALOG
+    value: "dqx"
+  - name: DQX_SCHEMA
+    value: "dqx_studio"
+  - name: DQX_JOB_ID
+    value: "788005875842875"
+  - name: DQX_WHEELS_VOLUME
+    value: "/Volumes/dqx/dqx_studio/wheels"
+  - name: DQX_ADMIN_GROUP
+    value: "admins"
+  - name: DQX_LAKEBASE_INSTANCE_NAME
+    value: "dqx-studio-lakebase"
+  - name: DQX_LAKEBASE_PG_URL
+    value: "postgresql://ep-gentle-bread-d8slh1xd.database.us-east-2.cloud.databricks.com/databricks_postgres?sslmode=require"
+  - name: DQX_LAKEBASE_DATABASE_NAME
+    value: "databricks_postgres"
+  - name: DQX_LAKEBASE_SCHEMA
+    value: "builder_app"
+  - name: DQX_LAKEBASE_POOL_MIN_SIZE
+    value: "1"
+  - name: DQX_LAKEBASE_POOL_MAX_SIZE
+    value: "10"
+  - name: DQX_LAKEBASE_TOKEN_REFRESH_MINUTES
+    value: "50"

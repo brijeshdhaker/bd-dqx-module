@@ -96,14 +96,14 @@ class _TokenHolder:
 
 def _generate_token(ws: WorkspaceClient, instance_name: str) -> str:
     """Generate a fresh Lakebase OAuth token (1-hour TTL)."""
-    # cred = ws.database.generate_database_credential(
-    #     request_id=str(uuid.uuid4()),
-    #     instance_names=[instance_name],
-    # )
-    # if not cred.token:
-    #     raise RuntimeError(f"Lakebase credential response had no token (instance={instance_name})")
-    # return cred.token
-    return "paSSW0rd"
+    cred = ws.database.generate_database_credential(
+        request_id=str(uuid.uuid4()),
+        instance_names=[instance_name],
+    )
+    if not cred.token:
+        raise RuntimeError(f"Lakebase credential response had no token (instance={instance_name})")
+    return cred.token
+    #return "paSSW0rd"
 
 
 def _to_text(value: Any) -> str | None:
@@ -223,8 +223,8 @@ class PgExecutor:
             "dbname": database,
             "user": username,
             "password": self._token_holder.token,
-            #"sslmode": "require",
-            "sslmode": "disable",
+            "sslmode": "require",
+            #"sslmode": "disable",
             "options": f"-c search_path={schema}",
         }
 
@@ -238,7 +238,7 @@ class PgExecutor:
         #     max_size=10
         # )
         self._pool: ConnectionPool = ConnectionPool(
-            conninfo="dbname=postgres user=postgres password=paSSW0rs host=localhost port=5432",
+            conninfo="",
             min_size=pool_min_size,
             max_size=pool_max_size,
             max_lifetime=self._token_refresh_seconds,
@@ -749,17 +749,17 @@ def build_pg_executor(
     its :meth:`__init__` and :meth:`_token_refresh_loop` for the
     full back-off / escalation contract.
     """
-    # instance = ws.database.get_database_instance(name=instance_name)
-    # host = instance.read_write_dns
-    host = 'postgresql.sandbox.net'
+    instance = ws.database.get_database_instance(name=instance_name)
+    host = instance.read_write_dns
+    # host = 'postgresql.sandbox.net'
     if not host:
         raise RuntimeError(
             f"Lakebase instance {instance_name!r} has no read_write_dns. " "Is it provisioned and running?"
         )
 
-    # me = ws.current_user.me()
-    # username = me.user_name or me.id or ""
-    username = "postgres"
+    me = ws.current_user.me()
+    username = me.user_name or me.id or ""
+    # username = "postgres"
     if not username:
         raise RuntimeError("Could not determine workspace identity for Lakebase connection")
 

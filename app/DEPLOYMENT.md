@@ -24,8 +24,8 @@ The deploying user (you) needs the permissions below. They are **all** consumed 
 | 3 | **Allow cluster create** entitlement | You, in the workspace | `bundle deploy` for job clusters always; for the warehouse Mode A only | Warehouse / job creation rejected |
 | 4 | **Databricks Apps: Can Manage** workspace permission | You, in the workspace | `bundle deploy` of the App resource | App creation rejected |
 | 5 | **Databricks Database (Lakebase): Manager** entitlement | You, in the workspace | `bundle deploy` of the `database_instances` resource | `Error: User does not have permission to create database instances` |
-| 6 | **USE CATALOG** + **CREATE SCHEMA** on `<catalog_name>` | Your user or an admin group you're in | `bundle deploy` of the `schemas` and `volumes` resources | `Error: User does not have CREATE_SCHEMA on catalog '<catalog>'` |
-| 7 | **MANAGE** on `<catalog_name>` (or be the catalog owner) | Your user or an admin group you're in | `post_deploy_grants.sh` (issues `GRANT USE CATALOG / ALL PRIVILEGES … TO <app SP>` and `… TO account users`) | `Error: User does not have privilege MANAGE on catalog '<catalog>'` |
+| 6 | **USE CATALOG** + **CREATE SCHEMA** on `<catalog_name>` | Your user or an admin group you're in | `bundle deploy` of the `schemas` and `volumes` resources | `Error: User does not have CREATE_SCHEMA on catalog 'dqx'` |
+| 7 | **MANAGE** on `<catalog_name>` (or be the catalog owner) | Your user or an admin group you're in | `post_deploy_grants.sh` (issues `GRANT USE CATALOG / ALL PRIVILEGES … TO <app SP>` and `… TO account users`) | `Error: User does not have privilege MANAGE on catalog 'dqx'` |
 | 8 | **Service Principal: User** role on the task-runner SP | Your user, on the SP you'll use as `dqx_service_principal_application_id` | `bundle deploy` of the `jobs.dqx_task_runner` resource (sets `run_as.service_principal_name`) | `Error: User is not authorized to use this service principal` |
 | 9 | **Service Principal: Manager** role on the task-runner SP, *or* a pre-shared OAuth client secret | Your user, on the same SP | Only needed if you want to **mint a fresh OAuth secret yourself** for the task-runner (e.g. via `databricks service-principal-secrets-proxy create <sp-id>`) | `Error: User is not authorized to perform this operation` when minting a new secret |
 | 10 | **Account admin** (one-time, post-deploy) | Account level | Updating the app's OAuth custom-app integration to include the `all-apis` scope (see [Expand OAuth Scopes](#optional-expand-oauth-scopes)) | Some app features (job submission, advanced SCIM lookups) return 403 |
@@ -63,7 +63,7 @@ The bundle requires a service principal to run the task-runner job. This is sepa
 
 **Find an existing SP's Application ID:**
 ```bash
-databricks service-principals list -p <your-profile>
+databricks service-principals list -p databricks-cli
 ```
 
 ## Step 2: Enable User Token Passthrough
@@ -96,7 +96,7 @@ What this means in practice:
 If the workspace was previously deployed with the old bootstrap-script flow (or if the resources were created manually), `databricks bundle deploy` will fail with "already exists" / "Instance name is not unique" on the first run because it's trying to CREATE resources that already exist. Fix this in one command:
 
 ```bash
-make app-bind PROFILE=<your-profile> TARGET=<your-target>
+make app-bind PROFILE=databricks-cli TARGET=dev
 ```
 
 `make app-bind` invokes `app/scripts/bind_resources.sh`, which calls `databricks bundle deployment bind` for each stateful resource (one bind per target). After bind, `bundle deploy` sees the resource as already-managed and does diff-and-update instead of CREATE. Bind is a one-time operation per target — once bound, subsequent deploys don't need it. Re-running `make app-bind` on a fully-bound target is a safe no-op.
@@ -115,7 +115,7 @@ Everything else has a sensible default and can be overridden per target. Below i
 targets:
   dev:
     workspace:
-      profile: <your-profile>
+      profile: databricks-cli
     variables:
       catalog_name: <your-catalog>
       dqx_service_principal_application_id: <your-sp-application-id>
@@ -242,7 +242,7 @@ All target-level variables, their defaults, and what they control:
 | `sql_warehouse_name` | `dqx-studio-sql-warehouse` | Mode A only | Name passed to Terraform when CREATING the bundle-managed warehouse. **Ignored in Mode B** (the warehouse already exists with its own name). Override per target to avoid duplicates in shared workspaces. |
 | `schema_name` | `dqx_studio` | No | Main schema — holds run history, profiling, metrics, quarantine, and OLTP fallback tables. Declared as `resources.schemas.main_schema` in the bundle with `lifecycle.prevent_destroy: true`. |
 | `tmp_schema_name` | `dqx_studio_tmp` | No | Per-user temp-view schema. Declared as `resources.schemas.tmp_schema` with `lifecycle.prevent_destroy: true`. |
-| `wheels_volume_name` | `wheels` | No | UC volume under `<catalog>.<schema_name>` for the DQX + task-runner wheels. Declared as `resources.volumes.wheels` with `lifecycle.prevent_destroy: true`. |
+| `wheels_volume_name` | `wheels` | No | UC volume under `dqx.<schema_name>` for the DQX + task-runner wheels. Declared as `resources.volumes.wheels` with `lifecycle.prevent_destroy: true`. |
 | `lakebase_instance_name` | `dqx-studio-lakebase` | No | Lakebase Postgres instance for OLTP state. Declared as `resources.database_instances.lakebase` with `lifecycle.prevent_destroy: true`. Autoscaling by default per [Lakebase Autoscaling](https://docs.databricks.com/aws/en/oltp/upgrade-to-autoscaling). |
 | `lakebase_database_name` | `databricks_postgres` | No | Logical Postgres database inside the Lakebase instance the app connects to. Defaults to `databricks_postgres` (always present, no provisioning step). All DQX tables live in a dedicated `dqx_studio` Postgres schema inside this database, so multiple apps can safely share the same `databricks_postgres` on one Lakebase instance. Override only if you've manually created a different logical DB you want to use. |
 | `lakebase_capacity` | `CU_1` | No | Lakebase compute capacity. Valid values: `CU_1`, `CU_2`, `CU_4`, `CU_8`. To resize an existing instance, change this value and redeploy. Bump up if Lakebase queries queue in the app logs. |
@@ -256,10 +256,10 @@ Build, deploy, grant permissions, and start the app in a single command:
 ```bash
 # Existing workspace where the storage was previously bootstrapped
 # out-of-band (e.g. with the older bootstrap script): bind once.
-make app-bind PROFILE=<your-profile> TARGET=<your-target>
+make app-bind PROFILE=databricks-cli TARGET=dev
 
 # Every deploy (fresh or otherwise):
-make app-deploy PROFILE=<your-profile> TARGET=<your-target>
+make app-deploy PROFILE=databricks-cli TARGET=dev
 ```
 
 `make app-deploy` runs the following steps automatically:
@@ -279,19 +279,19 @@ If you prefer to run each step individually:
 make app-build
 
 # (One-time, only on a workspace whose storage was created out-of-band)
-make app-bind PROFILE=<your-profile> TARGET=<your-target>
+make app-bind PROFILE=databricks-cli TARGET=dev
 
 # Deploy the bundle (creates / updates schemas, volume, Lakebase
 # instance, task-runner job, app, and the SQL warehouse in Mode A targets
 # — Mode B targets reuse an existing warehouse, see "Choosing a SQL
 # warehouse mode")
-cd app && databricks bundle deploy -p <your-profile> -t <your-target>
+cd app && databricks bundle deploy -p databricks-cli -t dev
 
 # Grant permissions to the app SP (auto-discovered after deploy)
-make app-grant-permissions PROFILE=<your-profile> TARGET=<your-target>
+make app-grant-permissions PROFILE=databricks-cli TARGET=dev
 
 # Start the app
-cd app && databricks bundle run dqx-studio -p <your-profile> -t <your-target>
+cd app && databricks bundle run dqx-studio -p databricks-cli -t dev
 ```
 
 ### Manual grants (if the script doesn't work for your setup)
@@ -299,29 +299,29 @@ cd app && databricks bundle run dqx-studio -p <your-profile> -t <your-target>
 The grant script discovers both SPs automatically. If you need to run the SQL manually instead:
 
 ```sql
--- <app-sp-id>: the app's auto-created SP (find it in Apps → Settings → Service principal)
--- <job-sp-id>: the SP you created in Step 1
+-- 109c3c3d-f328-4ef7-8b11-525715f7ecdd: the app's auto-created SP (find it in Apps → Settings → Service principal)
+-- 211d31e8-a436-415a-b99c-541379021a3e: the SP you created in Step 1
 
 -- App service principal
-GRANT USE CATALOG ON CATALOG <catalog> TO `<app-sp-id>`;
-GRANT ALL PRIVILEGES ON SCHEMA <catalog>.dqx_studio TO `<app-sp-id>`;
-GRANT ALL PRIVILEGES ON SCHEMA <catalog>.dqx_studio_tmp TO `<app-sp-id>`;
-GRANT ALL PRIVILEGES ON VOLUME <catalog>.dqx_studio.wheels TO `<app-sp-id>`;
+GRANT USE CATALOG ON CATALOG dqx TO `109c3c3d-f328-4ef7-8b11-525715f7ecdd`;
+GRANT ALL PRIVILEGES ON SCHEMA dqx.dqx_studio TO `109c3c3d-f328-4ef7-8b11-525715f7ecdd`;
+GRANT ALL PRIVILEGES ON SCHEMA dqx.dqx_studio_tmp TO `109c3c3d-f328-4ef7-8b11-525715f7ecdd`;
+GRANT ALL PRIVILEGES ON VOLUME dqx.dqx_studio.wheels TO `109c3c3d-f328-4ef7-8b11-525715f7ecdd`;
 
 -- Job service principal (task runner)
-GRANT USE CATALOG ON CATALOG <catalog> TO `<job-sp-id>`;
-GRANT ALL PRIVILEGES ON SCHEMA <catalog>.dqx_studio TO `<job-sp-id>`;
-GRANT ALL PRIVILEGES ON SCHEMA <catalog>.dqx_studio_tmp TO `<job-sp-id>`;
-GRANT ALL PRIVILEGES ON VOLUME <catalog>.dqx_studio.wheels TO `<job-sp-id>`;
+GRANT USE CATALOG ON CATALOG dqx TO `<job-sp-id>`;
+GRANT ALL PRIVILEGES ON SCHEMA dqx.dqx_studio TO `211d31e8-a436-415a-b99c-541379021a3e`;
+GRANT ALL PRIVILEGES ON SCHEMA dqx.dqx_studio_tmp TO `211d31e8-a436-415a-b99c-541379021a3e`;
+GRANT ALL PRIVILEGES ON VOLUME dqx.dqx_studio.wheels TO `211d31e8-a436-415a-b99c-541379021a3e`;
 
 -- End users need USE CATALOG plus USE SCHEMA / CREATE TABLE on the tmp
 -- schema to create the temporary views used by dry-run / preview. The
 -- view is created with the user's OBO token (so their own table read
--- perms are enforced) but lives in <catalog>.dqx_studio_tmp, so they
+-- perms are enforced) but lives in dqx.dqx_studio_tmp, so they
 -- need to be able to write there. Without the schema-level grants,
 -- every dry-run fails with PERMISSION_DENIED on CREATE OR REPLACE VIEW.
-GRANT USE CATALOG ON CATALOG <catalog> TO `account users`;
-GRANT USE SCHEMA, CREATE TABLE ON SCHEMA <catalog>.dqx_studio_tmp TO `account users`;
+GRANT USE CATALOG ON CATALOG dqx TO `account users`;
+GRANT USE SCHEMA, CREATE TABLE ON SCHEMA dqx.dqx_studio_tmp TO `account users`;
 
 -- Mode B only — bundle-managed warehouse (Mode A) has these grants applied
 -- automatically by Terraform via the `permissions:` block in the YAML.
@@ -335,11 +335,11 @@ GRANT USE SCHEMA, CREATE TABLE ON SCHEMA <catalog>.dqx_studio_tmp TO `account us
 
 > **Lakebase grants are handled differently.** When Lakebase is enabled, the bundle binds the database to the app via a `database` resource block (`permission: CAN_CONNECT_AND_CREATE`). DABs translates that into the equivalent Postgres role grants automatically — there is no separate SQL to run. The first time the app connects, `PgMigrationRunner` creates its own schema and tables inside the Lakebase database.
 
-To grant app access to end users, go to **Apps → `<app-name>` → Permissions** and assign `Can Use`. Replace `<app-name>` with the value of `app_name` configured for your target (default `dqx-studio`).
+To grant app access to end users, go to **Apps → `dqx-studio` → Permissions** and assign `Can Use`. Replace `dqx-studio` with the value of `app_name` configured for your target (default `dqx-studio`).
 
 Access the app at:
 ```
-https://<your-workspace-url>/apps/<app-name>
+https://dbc-ad78fc43-bcc0.cloud.databricks.com/apps/dqx-studio
 ```
 
 ## Lakebase backend
@@ -369,9 +369,9 @@ The scopes are managed at the **account** level, not the workspace. You need a C
 
 ```bash
 databricks auth login \
-  --host https://accounts.cloud.databricks.com \
-  --account-id <your-databricks-account-id> \
-  --profile <account-profile-name>
+  --host https://dbc-ad78fc43-bcc0.cloud.databricks.com \
+  --account-id eee8ca65-56a2-4cd5-aae4-8edc4a19e595 \
+  --profile databricks-cli
 ```
 
 Replace `accounts.cloud.databricks.com` with the account host for your cloud (`accounts.azuredatabricks.net` for Azure, `accounts.gcp.databricks.com` for GCP).
@@ -379,18 +379,18 @@ Replace `accounts.cloud.databricks.com` with the account host for your cloud (`a
 **2. Find the app's OAuth client ID:**
 
 ```bash
-databricks account custom-app-integration list -p <account-profile-name>
+databricks account custom-app-integration list -p databricks-cli
 ```
 
 Look for the integration whose name matches your deployed app (default `dqx-studio`, or whatever you set `app_name` to). Copy its `integration_id` — this is the `<oauth2-app-client-id>` used in the next step.
 
-You can also find it in the workspace UI under **Apps → `<app-name>` → User authorization**.
+You can also find it in the workspace UI under **Apps → `dqx-studio` → User authorization**.
 
 **3. Update the OAuth scopes:**
 
 ```bash
 databricks account custom-app-integration update '<oauth2-app-client-id>' \
-  -p <account-profile-name> \
+  -p databricks-cli \
   --json '{
     "scopes": [
       "openid",
@@ -406,8 +406,8 @@ databricks account custom-app-integration update '<oauth2-app-client-id>' \
 **4. Restart the app** so the new scopes take effect:
 
 ```bash
-databricks apps stop  <app-name> -p <your-profile>
-databricks apps start <app-name> -p <your-profile>
+databricks apps stop  dqx-studio -p databricks-cli
+databricks apps start dqx-studio -p databricks-cli
 ```
 
 After the app restarts, sign in again in the browser — you'll be prompted to re-consent to the expanded scopes.
@@ -417,24 +417,24 @@ After the app restarts, sign in again in the browser — you'll be prompted to r
 ## Redeploying After Code Changes
 
 ```bash
-make app-deploy PROFILE=<your-profile> TARGET=<your-target>
+make app-deploy PROFILE=databricks-cli TARGET=dev
 ```
 
 Or manually:
 ```bash
 make app-build
-cd app && databricks bundle deploy -p <your-profile> -t <your-target>
+cd app && databricks bundle deploy -p databricks-cli -t dev
 # The app restarts automatically after deployment
 ```
 
 ## Monitor and Manage
 
-Replace `<app-name>` with the deployed app name (the value of `app_name` for your target — default `dqx-studio`):
+Replace `dqx-studio` with the deployed app name (the value of `app_name` for your target — default `dqx-studio`):
 
 ```bash
-databricks apps get <app-name> -p <your-profile>    # status
-databricks apps logs <app-name> -p <your-profile>   # logs
-databricks apps stop <app-name> -p <your-profile>   # stop
+databricks apps get dqx-studio -p databricks-cli    # status
+databricks apps logs dqx-studio -p databricks-cli   # logs
+databricks apps stop dqx-studio -p databricks-cli   # stop
 ```
 
 ## Troubleshooting
@@ -442,25 +442,25 @@ databricks apps stop <app-name> -p <your-profile>   # stop
 **"App with name X does not exist or is deleted":**
 ```bash
 rm -rf .databricks                                          # clean local bundle state
-databricks bundle deploy -p <your-profile> --force          # or force deploy
+databricks bundle deploy -p databricks-cli --force          # or force deploy
 ```
 
 **Profiler or dry-run not starting:**
 1. Check `DQX_JOB_ID` is set (visible in the app's environment config in the UI)
-2. Confirm the job exists: `databricks jobs list -p <your-profile>`
+2. Confirm the job exists: `databricks jobs list -p databricks-cli`
 3. Confirm the SP has `CAN_MANAGE` on the job (set automatically by DABs)
 
 **Job fails with "file not found" on wheel:**
 The task-runner job installs wheels from the UC volume. If the volume is empty the job fails. Start the app and wait for the wheel upload to complete:
 ```bash
-databricks apps logs <app-name> -p <your-profile>
+databricks apps logs dqx-studio -p databricks-cli
 # Look for: "Uploaded databricks_labs_dqx-<version>-py3-none-any.whl"
 ```
 
 **App says `"schema dqx_studio does not exist"` (or similar) on first start:**
 The schemas didn't deploy, or the bundle is pointing at a different catalog than the app. Confirm with `databricks bundle validate -p <profile> -t <target>` that `catalog_name` and `schema_name` resolve to the expected values, then redeploy:
 ```bash
-make app-deploy PROFILE=<your-profile> TARGET=<your-target>
+make app-deploy PROFILE=databricks-cli TARGET=dev
 ```
 
 **App logs `"Lakebase initialisation failed ... Refusing to start"` and the container restart-loops:**
@@ -468,7 +468,7 @@ The app deliberately refuses to start when Lakebase is configured (`DQX_LAKEBASE
 
 1. Confirm the Lakebase instance exists and is `AVAILABLE`:
    ```bash
-   databricks database list-database-instances -p <your-profile>
+   databricks database list-database-instances -p databricks-cli
    ```
    If the instance is missing, re-run `databricks bundle deploy`. If the instance is there but the state is `STARTING` / `UPDATING`, wait for it to reach `AVAILABLE` and the next restart will succeed.
 2. Confirm the app SP has `CAN_CONNECT_AND_CREATE` on the bound logical database. Check the bundle's `database` resource block under `resources.apps.dqx-studio.resources` (it should bind `database_name: ${var.lakebase_database_name}`) and redeploy.
@@ -478,8 +478,8 @@ The app deliberately refuses to start when Lakebase is configured (`DQX_LAKEBASE
 **`databricks bundle deploy` fails with `"already exists"` / `"Instance name is not unique"` on the first deploy of a target:**
 The schemas, volume, or Lakebase instance were created out-of-band before this version of the bundle (e.g. by the older bootstrap script). Run the bind step once per target to adopt them into bundle management:
 ```bash
-make app-bind PROFILE=<your-profile> TARGET=<your-target>
-make app-deploy PROFILE=<your-profile> TARGET=<your-target>
+make app-bind PROFILE=databricks-cli TARGET=dev
+make app-deploy PROFILE=databricks-cli TARGET=dev
 ```
 See [Migrating an existing workspace](#migrating-an-existing-workspace).
 

@@ -75,7 +75,7 @@ DQX_LAKEBASE_TOKEN_REFRESH_MINUTES=50       # OAuth token refresh cadence (token
 From the **project root**:
 ```bash
 make app-install   # JS dependencies (yarn)
-cd app && uv sync  # Python dependencies
+cd app && uv sync --active  # Python dependencies
 ```
 
 Or from the `app/` directory:
