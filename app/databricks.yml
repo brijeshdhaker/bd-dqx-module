@@ -148,7 +148,7 @@ artifacts:
     # prepends the parent DQX library wheel filename so Databricks
     # Apps' pip install picks up both, in dependency order.
     build: >
-      uv run python scripts/build_app.py &&
+      uv run --active python scripts/build_app.py &&
       uv build ../ --wheel --out-dir .build/ &&
       uv build tasks/ --wheel --out-dir .build/tasks/ &&
       dqx_whl=$(ls -1 .build/databricks_labs_dqx-*.whl | head -1 | xargs basename) &&
