@@ -1,0 +1,283 @@
+version: 1
+log_level: INFO
+#
+serverless_clusters: true
+upload_dependencies: false
+#
+anomaly_override_clusters: {}
+anomaly_spark_conf: {}
+
+custom_metrics: null
+e2e_override_clusters: {}
+e2e_spark_conf: {}
+
+#
+extra_params:
+  result_column_names:
+    errors: dq_errors           # <- default is "_errors"
+    warnings: dq_warnings       # <- default is "_warnings"
+  user_metadata:
+    custom_metadata: custom_value # <- optional user metadata to be added to the results  
+
+#
+llm_config:
+  model:
+    api_base: ''
+    api_key: ''
+    max_retries: 3
+    max_tokens: 1000
+    model_name: databricks/databricks-claude-sonnet-4-5
+    temperature: 0.0
+    timeout: 30.0
+
+#
+profiler_max_parallelism: 4
+profiler_override_clusters: {}
+profiler_spark_conf: {}
+
+#
+quality_checker_max_parallelism: 4
+quality_checker_override_clusters: {}
+quality_checker_spark_conf: {}
+
+#
+run_configs:
+- name: default
+  checks_location: /Volumes/workspace/raw/rules/workspace.raw.user_rules.yml
+  checks_user_requirements: null
+  anomaly_config: null
+  
+  #
+  lakebase_client_id: null
+  lakebase_instance_name: null
+  lakebase_port: null
+  
+  #
+  input_config:
+    format: delta
+    is_streaming: false
+    location: workspace.raw.users
+    options: {}
+    schema: null
+  
+  #
+  metrics_config:
+    format: delta
+    location: workspace.default.dqx_metrics
+    mode: append    
+  
+  #
+  output_config: 
+    format: delta
+    is_streaming: false
+    location: workspace.silver.users
+    options: 
+      mergeSchema: 'true'
+    trigger:                        # <- streaming trigger, only applicable if input_config.is_streaming is enabled
+      availableNow: true
+    schema: null
+  
+  #      
+  profiler_config:
+    criticality: error
+    filter: null
+    limit: 1000
+    llm_primary_key_detection: false
+    max_empty_ratio: null
+    max_null_ratio: null
+    sample_by_column: null
+    sample_by_values_limit: 1000
+    sample_fraction: 0.3
+    sample_seed: null
+    summary_stats_file: workspace.raw.user_summary_stats.yml
+  
+  #  
+  quarantine_config:
+    cluster_by: []
+    format: delta
+    location: workspace.raw.user_quarantine
+    mode: append
+    options:
+      mergeSchema: 'true'
+    trigger:
+      availableNow: true    
+    partition_by: []
+  
+  #
+  # custom_check_functions:                                                         # <- optional mapping of custom check function name to Python file (module) containing check function definition
+  #   my_func: custom_checks/my_funcs.py                                            # relative workspace path (installation folder prefix applied)
+  #   check_trackid: /Workspace/Shared/dqx/functions/dqx_check_trackid.py           # or absolute workspace path
+  #   email_mask: /Volumes/workspace/raw/functions/dqx_email_mask.py                # or UC volume path
+
+  #
+  # reference_tables:                                         # <- optional mapping of reference table names to reference table locations (e.g. required for foreign key check)
+  #   reference_table_1:                                      # <- name of the reference table
+  #     input_config:                                         # <- input data configuration for the reference table
+  #       format: delta
+  #       location: main.nytaxi.ref
+  #   reference_table_2:                                      # <- another reference table
+  #     input_config:
+  #       format: delta
+  #       location: main.nytaxi.ref2                          # <- location of the reference table, can be a table or path to files (cloud, volume or workspace path)
+
+  warehouse_id: 4501ae4095de396a
+#
+- name: employee
+  checks_location: /Volumes/workspace/raw/rules/workspace.raw.employee_rules.yml
+  checks_user_requirements: null
+  anomaly_config: null
+  
+  #
+  lakebase_client_id: null
+  lakebase_instance_name: null
+  lakebase_port: null
+  
+  #
+  input_config:
+    format: delta
+    is_streaming: false
+    location: workspace.default.users_raw
+    options: {}
+    schema: null
+  
+  #
+  metrics_config:
+    format: delta
+    location: workspace.default.dqx_metrics
+    mode: append    
+  
+  #
+  output_config: 
+    format: delta
+    is_streaming: false
+    location: workspace.default.users_silver
+    options: 
+      mergeSchema: 'true'
+    trigger:                        # <- streaming trigger, only applicable if input_config.is_streaming is enabled
+      availableNow: true
+    schema: null
+  
+  #      
+  profiler_config:
+    criticality: error
+    filter: null
+    limit: 1000
+    llm_primary_key_detection: false
+    max_empty_ratio: null
+    max_null_ratio: null
+    sample_by_column: null
+    sample_by_values_limit: 1000
+    sample_fraction: 0.3
+    sample_seed: null
+    summary_stats_file: workspace_default_users_summary_stats.yml
+  
+  #  
+  quarantine_config:
+    cluster_by: []
+    format: delta
+    location: workspace.default.users_raw_quarantine
+    mode: append
+    options:
+      mergeSchema: 'true'
+    trigger:
+      availableNow: true    
+    partition_by: []
+  
+  #
+  # custom_check_functions:                                   # <- optional mapping of custom check function name to Python file (module) containing check function definition
+  #   my_func: custom_checks/my_funcs.py                      # relative workspace path (installation folder prefix applied)
+  #   my_other: /Workspace/Shared/MyApp/my_funcs.py           # or absolute workspace path
+  #   email_mask: /Volumes/main/dqx_utils/custom/email.py     # or UC volume path
+
+  # 'valid_departments' is another reference mapping
+  reference_tables:                                           # <- optional mapping of reference table names to reference table locations (e.g. required for foreign key check)
+    department:                                               # <- name of the reference table
+      input_config:                                           # <- input data configuration for the reference table
+        format: delta
+        location: workspace.raw.department
+  #   reference_table_2:                                      # <- another reference table
+  #     input_config:
+  #       format: delta
+  #       location: main.nytaxi.ref2                          # <- location of the reference table, can be a table or path to files (cloud, volume or workspace path)
+
+  warehouse_id: 4501ae4095de396a
+- name: department
+  checks_location: /Volumes/workspace/raw/rules/workspace.raw.department_rules.yml
+  checks_user_requirements: null
+  anomaly_config: null
+  
+  #
+  lakebase_client_id: null
+  lakebase_instance_name: null
+  lakebase_port: null
+  
+  #
+  input_config:
+    format: delta
+    is_streaming: false
+    location: workspace.default.users_raw
+    options: {}
+    schema: null
+  
+  #
+  metrics_config:
+    format: delta
+    location: workspace.default.dqx_metrics
+    mode: append    
+  
+  #
+  output_config: 
+    format: delta
+    is_streaming: false
+    location: workspace.default.users_silver
+    options: 
+      mergeSchema: 'true'
+    trigger:                        # <- streaming trigger, only applicable if input_config.is_streaming is enabled
+      availableNow: true
+    schema: null
+  
+  #      
+  profiler_config:
+    criticality: error
+    filter: null
+    limit: 1000
+    llm_primary_key_detection: false
+    max_empty_ratio: null
+    max_null_ratio: null
+    sample_by_column: null
+    sample_by_values_limit: 1000
+    sample_fraction: 0.3
+    sample_seed: null
+    summary_stats_file: workspace_default_users_summary_stats.yml
+  
+  #  
+  quarantine_config:
+    cluster_by: []
+    format: delta
+    location: workspace.default.users_raw_quarantine
+    mode: append
+    options:
+      mergeSchema: 'true'
+    trigger:
+      availableNow: true    
+    partition_by: []
+  
+  #
+  # custom_check_functions:                                 # <- optional mapping of custom check function name to Python file (module) containing check function definition
+  #   my_func: custom_checks/my_funcs.py                    # relative workspace path (installation folder prefix applied)
+  #   my_other: /Workspace/Shared/MyApp/my_funcs.py         # or absolute workspace path
+  #   email_mask: /Volumes/main/dqx_utils/custom/email.py   # or UC volume path
+
+  #
+  # reference_tables:                                         # <- optional mapping of reference table names to reference table locations (e.g. required for foreign key check)
+  #   reference_table_1:                                      # <- name of the reference table
+  #     input_config:                                         # <- input data configuration for the reference table
+  #       format: delta
+  #       location: main.nytaxi.ref
+  #   reference_table_2:                                      # <- another reference table
+  #     input_config:
+  #       format: delta
+  #       location: main.nytaxi.ref2                          # <- location of the reference table, can be a table or path to files (cloud, volume or workspace path)
+
+  warehouse_id: 4501ae4095de396a  
+

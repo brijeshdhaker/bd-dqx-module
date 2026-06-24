@@ -1,0 +1,32 @@
+# The reference_tables are then utilized in your checks configuration
+checks:
+  - criticality: error
+    check:
+      function: is_not_null
+      arguments:
+        column: emp_id
+        trim_strings: true
+
+  - criticality: warn
+    check:
+      function: is_not_empty
+      arguments:
+        column: emp_id
+        trim_strings: true 
+        
+  - criticality: warn
+    check:
+      function: is_valid_date
+      arguments:
+        column: hire_date
+
+  - criticality: warn
+    check:
+      check_name: "validate_department_id"
+      rule_type: "foreign_key"
+      column: "dept_id"
+      arguments:
+        reference_table: "department"
+        reference_column: "dept_id"
+
+     

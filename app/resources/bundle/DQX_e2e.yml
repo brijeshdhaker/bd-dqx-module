@@ -8,6 +8,7 @@ resources:
         on_failure:
           - brijeshdhaker@gmail.com
       tasks:
+        #
         - task_key: prepare
           python_wheel_task:
             package_name: databricks_labs_dqx
@@ -19,7 +20,7 @@ resources:
               patterns: ""
               run_config_name: ""
               parent_run_id: "{{parent_run_id}}"
-              config: /Workspace/Workspace/Users/brijeshdhaker@gmail.com/Wheels/dqx/config.yml
+              config: /Workspace/Users/brijeshdhaker@gmail.com/Wheels/dqx/config.yml
               job_id: "{{job_id}}"
               run_id: "{{run_id}}"
               quarantine_table_suffix: _dq_quarantine
@@ -28,16 +29,22 @@ resources:
               attempt: "{{job.repair_count}}"
               output_table_suffix: _dq_output
           environment_key: default
+        
+        #
         - task_key: run_profiler
           depends_on:
             - task_key: prepare
           run_job_task:
-            job_id: 99810542135038
+            job_id: ${resources.jobs.DQX_profiler.id}
+        
+        #
         - task_key: run_quality_checker
           depends_on:
             - task_key: run_profiler
           run_job_task:
-            job_id: 563044122035697
+            job_id: ${resources.jobs.DQX_quality_checker.id}
+        
+        #
         - task_key: finalize
           depends_on:
             - task_key: run_quality_checker
@@ -51,7 +58,7 @@ resources:
               patterns: ""
               run_config_name: ""
               parent_run_id: "{{parent_run_id}}"
-              config: /Workspace/Workspace/Users/brijeshdhaker@gmail.com/Wheels/dqx/config.yml
+              config: /Workspace/Users/brijeshdhaker@gmail.com/Wheels/dqx/config.yml
               job_id: "{{job_id}}"
               run_id: "{{run_id}}"
               quarantine_table_suffix: _dq_quarantine
@@ -68,6 +75,6 @@ resources:
         - environment_key: default
           spec:
             dependencies:
-              - /Workspace/Users/brijeshdhaker@gmail.com/Wheels/dqx/wheels/databricks_labs_dqx-0.15.0-py3-none-any.whl
+              - /Volumes/dqx/dqx_studio/wheels/databricks_labs_dqx-0.15.0-py3-none-any.whl
             environment_version: "5"
       performance_target: PERFORMANCE_OPTIMIZED

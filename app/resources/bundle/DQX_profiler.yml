@@ -36,6 +36,6 @@ resources:
         - environment_key: default
           spec:
             dependencies:
-              - /Workspace/Workspace/Users/brijeshdhaker@gmail.com/Wheels/dqx/wheels/databricks_labs_dqx-0.15.0-py3-none-any.whl[llm,pii,anomaly]
+              - /Volumes/dqx/dqx_studio/wheels/databricks_labs_dqx-0.15.0-py3-none-any.whl[llm,pii,anomaly]
             environment_version: "5"
       performance_target: PERFORMANCE_OPTIMIZED
