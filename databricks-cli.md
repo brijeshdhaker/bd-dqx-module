@@ -67,6 +67,12 @@ databricks catalogs delete --name dqx --force
 #
 databricks workspace list /Workspace/Users/brijeshdhaker@gmail.com/apps --profile databricks-cli
 
+#
+databricks workspace import --file ./app/resources/dqx/config.yml /Workspace/Applications/dqx/config.yml --format AUTO --overwrite
+
+databricks workspace import --src-path "app/resources/dqx/dqx_functions" --target-path "/Users/ybrijeshdhaker@gmail.com/example.com" --format SOURCE --overwrite
+
+
 # Download the app files to your computer:
 databricks workspace export-dir /Workspace/Users/brijeshdhaker@gmail.com/apps/bd_dqx_module . --profile databricks-cli
 
@@ -117,6 +123,29 @@ databricks apps delete dqx-studio --profile databricks-cli
 
 ```
 
+#
+```bash
+
+#
+databricks workspace import --file ./app/resources/dqx/config.yml /Workspace/Applications/dqx/config.yml --format AUTO --overwrite
+
+#
+databricks fs cp app/resources/dqx/rules/ dbfs:/Volumes/workspace/raw/rules/ --recursive
+
+#
+databricks fs cp app/resources/dqx/rules/workspace.raw.department_rules.yml dbfs:/Volumes/workspace/raw/rules/
+databricks fs cp app/resources/dqx/rules/workspace.raw.employee_rules.yml dbfs:/Volumes/workspace/raw/rules/
+databricks fs cp app/resources/dqx/rules/workspace.raw.orders_rules.yml dbfs:/Volumes/workspace/raw/rules/
+databricks fs cp app/resources/dqx/rules/workspace.raw.users_rules.yml dbfs:/Volumes/workspace/raw/rules/ --overwrite
+
+
+
+#
+databricks fs cp app/resources/dqx/dqx_functions/ dbfs:/Volumes/workspace/raw/dqx_functions/ --recursive
+
+databricks fs cp dbfs:/Volumes/catalog_a/schema_a/volume_a/file.csv dbfs:/Volumes/catalog_b/schema_b/volume_b/target_dir/
+
+```
 # DQX Installation
 ```bash
 

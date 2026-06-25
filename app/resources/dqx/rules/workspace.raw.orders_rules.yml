@@ -1,0 +1,91 @@
+#
+# workspace.raw.orders_rules
+# 
+# Ensure only 1 country code exists per country
+checks:
+- criticality: error
+  check:
+    function: is_not_null_and_not_empty
+    arguments:
+      column: order_id
+#      
+- criticality: error
+  check:
+    function: is_in_list
+    arguments:
+      column: status
+      allowed:
+        - pending
+        - shipped
+        - delivered
+        - cancelled
+
+#        
+- criticality: warn
+  check:
+    function: is_data_fresh
+    arguments:
+      column: order_date
+      max_age_minutes: 43200  # 30 days = 43200 minutes
+
+#
+- criticality: error
+  check:
+    function: is_not_null_and_not_empty
+    arguments:
+      column: customer_id
+
+# Dataset Level Rule
+- criticality: error
+  check:
+    function: is_unique
+    arguments:
+      columns:
+        - order_id      
+
+#
+- criticality: warn
+  check:
+    function: is_aggr_not_greater_than
+    arguments:
+      column: amount
+      aggr_type: sum
+      group_by:
+        - region
+      limit: 1000
+
+# The foreign_key check works like a lookup join.
+- criticality: error
+  check:
+    function: foreign_key
+    arguments:
+      column: customer_id
+      ref_table: customers
+      ref_column: customer_id
+
+# Custom SQL query , no single order should exceed 20% of total amount
+- criticality: warn
+  check:
+    function: sql_query
+    arguments:
+      query: >
+        SELECT order_id,
+          CASE WHEN amount > total * 0.2 THEN false ELSE true END AS check_result
+        FROM (
+          SELECT *, SUM(amount) OVER () AS total
+          FROM {input_table}
+        )
+      merge_columns:
+        - order_id
+
+#      
+- criticality: error
+  check:
+    function: is_aggr_not_greater_than
+    arguments:
+      column: region
+      aggr_type: count_distinct
+      group_by:
+      - region
+      limit: 1
+

@@ -1,0 +1,23 @@
+# data_quality.default.employee
+- criticality: error
+  check:
+    function: is_not_null_and_not_empty
+    arguments:
+      column: id
+      trim_strings: true
+
+# custom function exampel     
+- criticality: warn
+  check:
+    function: py_validate_email
+    arguments:
+      column: email
+      trim_strings: true
+
+# custom function exampel     
+- criticality: warn
+  check:
+    function: py_validate_trackid
+    arguments:
+      column: tracking_id
+      trim_strings: true      
