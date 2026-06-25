@@ -1,7 +1,7 @@
 resources:
   jobs:
-    dqx_studio_task_runner:
-      name: dqx-studio-task-runner
+    dqx_task_runner:
+      name: dqx-task-runner
       max_concurrent_runs: 10
       tasks:
         - task_key: run_task

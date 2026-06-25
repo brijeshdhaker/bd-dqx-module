@@ -12,12 +12,10 @@
     function: py_validate_email
     arguments:
       column: email
-      trim_strings: true
 
 # custom function exampel     
 - criticality: warn
   check:
     function: py_validate_trackid
     arguments:
-      column: tracking_id
-      trim_strings: true      
+      column: tracking_id     

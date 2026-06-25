@@ -20,7 +20,7 @@ resources:
               patterns: ""
               run_config_name: ""
               parent_run_id: "{{parent_run_id}}"
-              config: /Workspace/Users/brijeshdhaker@gmail.com/Wheels/dqx/config.yml
+              config: /Workspace/Applications/dqx/config.yml
               job_id: "{{job_id}}"
               run_id: "{{run_id}}"
               quarantine_table_suffix: _dq_quarantine
@@ -58,7 +58,7 @@ resources:
               patterns: ""
               run_config_name: ""
               parent_run_id: "{{parent_run_id}}"
-              config: /Workspace/Users/brijeshdhaker@gmail.com/Wheels/dqx/config.yml
+              config: /Workspace/Applications/dqx/config.yml
               job_id: "{{job_id}}"
               run_id: "{{run_id}}"
               quarantine_table_suffix: _dq_quarantine
@@ -75,6 +75,88 @@ resources:
         - environment_key: default
           spec:
             dependencies:
-              - /Volumes/dqx/dqx_studio/wheels/databricks_labs_dqx-0.15.0-py3-none-any.whl
+              - /Workspace/Applications/dqx/wheels/databricks_labs_dqx-0.12.0-py3-none-any.whl
+            environment_version: "5"
+      performance_target: PERFORMANCE_OPTIMIZED
+    
+    #
+    DQX_profiler:
+      name: "[DQX] profiler"
+      email_notifications:
+        on_success:
+          - brijeshdhaker@gmail.com
+        on_failure:
+          - brijeshdhaker@gmail.com
+      tasks:
+        - task_key: profile
+          python_wheel_task:
+            package_name: databricks_labs_dqx
+            entry_point: runtime
+            named_parameters:
+              start_time: "{{job.start_time.iso_datetime}}"
+              task: profile
+              workflow: profiler
+              patterns: ""
+              run_config_name: ""
+              parent_run_id: "{{parent_run_id}}"
+              config: /Workspace/Applications/dqx/config.yml
+              job_id: "{{job_id}}"
+              run_id: "{{run_id}}"
+              quarantine_table_suffix: _dq_quarantine
+              exclude_patterns: ""
+              product_name: dqx
+              attempt: "{{job.repair_count}}"
+              output_table_suffix: _dq_output
+          environment_key: default
+      tags:
+        version: v0.15.0
+      queue:
+        enabled: true
+      environments:
+        - environment_key: default
+          spec:
+            dependencies:
+              - /Workspace/Applications/dqx/wheels/databricks_labs_dqx-0.15.0-py3-none-any.whl[llm,pii,anomaly]
+            environment_version: "5"
+      performance_target: PERFORMANCE_OPTIMIZED
+    
+    #
+    DQX_quality_checker:
+      name: "[DQX] quality-checker"
+      email_notifications:
+        on_success:
+          - brijeshdhaker@gmail.com
+        on_failure:
+          - brijeshdhaker@gmail.com
+      tasks:
+        - task_key: apply_checks
+          python_wheel_task:
+            package_name: databricks_labs_dqx
+            entry_point: runtime
+            named_parameters:
+              start_time: "{{job.start_time.iso_datetime}}"
+              task: apply_checks
+              workflow: quality-checker
+              patterns: ""
+              run_config_name: ""
+              parent_run_id: "{{parent_run_id}}"
+              config: /Workspace/Applications/dqx/config.yml
+              job_id: "{{job_id}}"
+              run_id: "{{run_id}}"
+              quarantine_table_suffix: _dq_quarantine
+              exclude_patterns: ""
+              product_name: dqx
+              attempt: "{{job.repair_count}}"
+              output_table_suffix: _dq_output
+          environment_key: default
+      tags:
+        version: v0.15.0
+      queue:
+        enabled: true
+      environments:
+        - environment_key: default
+          spec:
+            dependencies:
+              - /Workspace/Applications/dqx/wheels/databricks_labs_dqx-0.15.0-py3-none-any.whl[llm,pii,anomaly]
             environment_version: "5"
       performance_target: PERFORMANCE_OPTIMIZED

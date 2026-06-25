@@ -93,11 +93,20 @@ databricks bundle validate
 databricks bundle deploy --target dev --profile databricks-cli
 databricks bundle deploy -t dev -p databricks-cli 
 
+databricks bundle deployment bind main_schema dqx.dqx_studio -t dev
+databricks bundle deployment bind tmp_schema dqx.dqx_studio_tmp -t dev
+databricks bundle deployment bind wheels dqx.dqx_studio.wheels -t dev
+
 #### Destroy Lakebase (does NOT affect the app)
 databricks bundle destroy --auto-approve --profile databricks-cli
 
 #### Trigger Remote Job
 databricks bundle run --target dev job_pipeline_dqx_qc
+
+
+databricks bundle deployment unbind wheels -t dev
+databricks bundle deployment unbind tmp_schema -t dev
+databricks bundle deployment unbind main_schema -t dev
 
 ```
 

@@ -1,0 +1,54 @@
+resources:
+  # ``sql_warehouses.dqx_sql_warehouse`` is intentionally NOT declared at
+  # top-level. Targets that want a bundle-managed warehouse declare it
+  # inside their own ``resources.sql_warehouses`` block (see bdf-vo).
+  # Targets that point at an existing warehouse just set
+  # ``sql_warehouse_id`` to the literal ID (see kaizen-app). This keeps
+  # ``bundle destroy`` honest — it can't accidentally delete a shared
+  # warehouse the bundle never created.
+
+  # ------------------------------------------------------------------
+  # Stateful storage (schemas, volume, Lakebase instance + database).
+  #
+  # Every entry below is tagged ``lifecycle.prevent_destroy: true`` so
+  # that ``databricks bundle destroy`` (or a deploy that would
+  # otherwise replace the resource) fails fast instead of dropping the
+  # backing data. To intentionally tear something down: remove the
+  # flag, ``databricks bundle deployment unbind <key>``, then destroy.
+  #
+  # For an existing workspace whose resources were provisioned
+  # out-of-band (e.g. from the previous bootstrap script), one-time
+  # binding is required before the first deploy — see ``make app-bind``
+  # and DEPLOYMENT.md → "Migrating an existing workspace".
+  # ------------------------------------------------------------------
+  schemas:
+    main_schema:
+      catalog_name: ${var.catalog_name}
+      name: ${var.schema_name}
+      comment: "DQX Studio main schema (rules, run history, profiling, metrics, quarantine, OLTP fallback)"
+      lifecycle:
+        prevent_destroy: true
+
+    tmp_schema:
+      catalog_name: ${var.catalog_name}
+      name: ${var.tmp_schema_name}
+      comment: "DQX Studio temp schema for per-user dry-run views"
+      lifecycle:
+        prevent_destroy: true
+
+  volumes:
+    wheels:
+      catalog_name: ${var.catalog_name}
+      schema_name: ${resources.schemas.main_schema.name}
+      name: ${var.wheels_volume_name}
+      volume_type: MANAGED
+      comment: "DQX Studio wheel storage for the task runner"
+      lifecycle:
+        prevent_destroy: true
+
+  database_instances:
+    lakebase:
+      name: ${var.lakebase_instance_name}
+      capacity: ${var.lakebase_capacity}
+      lifecycle:
+        prevent_destroy: true
