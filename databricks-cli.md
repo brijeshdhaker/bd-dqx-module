@@ -85,6 +85,8 @@ databricks sync --watch . /Workspace/Users/brijeshdhaker@gmail.com/apps/bd_dqx_m
 ### Databricks Bundle Deploymnet
 #
 ``` bash
+databricks clusters spark-versions
+databricks clusters list
 
 #### Validate your syntax: Ensure there are no structural errors in your YAML configuration.
 databricks bundle validate
