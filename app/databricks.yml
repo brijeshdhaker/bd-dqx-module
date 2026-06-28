@@ -3,6 +3,7 @@ bundle:
   engine: direct
 
 include:
+  - resources/bundle/DQX_postgres.yml
   - resources/bundle/DQX_uc_objects.yml
   - resources/bundle/DQX_e2e.yml
   - resources/bundle/DQX_studio_task_runner.yml

@@ -30,7 +30,7 @@ databricks auth env --profile databricks-cli
 # Alternatively, test access by listing workspace roots
 ``` bash
 
-databricks fs ls
+databricks fs ls dbfs:/
 
 ```
 # Login to Workspace
@@ -53,7 +53,7 @@ databricks current-user me --profile databricks-cli
 databricks service-principals list -p databricks-cli
 ```
 
-#
+# Unity Catalog
 ```bash
 
 databricks functions list data_quality default --output json
@@ -67,9 +67,10 @@ databricks catalogs delete --name dqx --force
 #
 databricks workspace list /Workspace/Users/brijeshdhaker@gmail.com/apps --profile databricks-cli
 
-#
+# Upload file
 databricks workspace import --file ./app/resources/dqx/config.yml /Workspace/Applications/dqx/config.yml --format AUTO --overwrite
 
+# Upload folder
 databricks workspace import --src-path "app/resources/dqx/dqx_functions" --target-path "/Users/ybrijeshdhaker@gmail.com/example.com" --format SOURCE --overwrite
 
 
@@ -95,17 +96,21 @@ databricks bundle validate
 databricks bundle deploy --target dev --profile databricks-cli
 databricks bundle deploy -t dev -p databricks-cli 
 
+#### Destroy Lakebase (does NOT affect the app)
+databricks bundle destroy --auto-approve --profile databricks-cli
+
+# Binding
+databricks bundle deployment bind lakebase dqx-studio-lakebase -t dev
 databricks bundle deployment bind main_schema dqx.dqx_studio -t dev
 databricks bundle deployment bind tmp_schema dqx.dqx_studio_tmp -t dev
 databricks bundle deployment bind wheels dqx.dqx_studio.wheels -t dev
 
-#### Destroy Lakebase (does NOT affect the app)
-databricks bundle destroy --auto-approve --profile databricks-cli
 
 #### Trigger Remote Job
 databricks bundle run --target dev job_pipeline_dqx_qc
 
-
+# Unbinding
+databricks bundle deployment unbind lakebase -t dev
 databricks bundle deployment unbind wheels -t dev
 databricks bundle deployment unbind tmp_schema -t dev
 databricks bundle deployment unbind main_schema -t dev

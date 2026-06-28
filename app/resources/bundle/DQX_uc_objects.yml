@@ -46,9 +46,3 @@ resources:
       lifecycle:
         prevent_destroy: true
 
-  database_instances:
-    lakebase:
-      name: ${var.lakebase_instance_name}
-      capacity: ${var.lakebase_capacity}
-      lifecycle:
-        prevent_destroy: true

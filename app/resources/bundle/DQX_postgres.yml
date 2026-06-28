@@ -1,0 +1,9 @@
+# ------------------------------------------------------------------
+# Stateful storage (schemas, volume, Lakebase instance + database).
+resources:
+  database_instances:
+    lakebase:
+      name: ${var.lakebase_instance_name}
+      capacity: ${var.lakebase_capacity}
+      lifecycle:
+        prevent_destroy: true

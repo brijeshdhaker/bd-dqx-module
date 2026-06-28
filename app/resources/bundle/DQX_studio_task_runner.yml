@@ -1,7 +1,7 @@
 resources:
   jobs:
     dqx_task_runner:
-      name: dqx-task-runner
+      name: "[DQX] dqx-task-runner"
       max_concurrent_runs: 10
       tasks:
         - task_key: run_task
@@ -26,6 +26,7 @@ resources:
           environment_key: default
       tags:
         app: dqx
+        version: v0.15.0
       queue:
         enabled: true
       parameters:
